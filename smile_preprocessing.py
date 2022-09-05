@@ -1,7 +1,8 @@
 import pandas as pd
 
+
 def smile_data_clean():
-    df = pd.read_csv('smile-annotations-final.csv',
+    df = pd.read_csv('smile-annotations.csv',
                     names=['id', 'text', 'category'])
     df.set_index('id', inplace=True)
 
@@ -11,5 +12,4 @@ def smile_data_clean():
     df = df[df.category != 'nocode']
 
     df.category.value_counts()
-
     return df

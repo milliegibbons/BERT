@@ -1,5 +1,5 @@
 import torch
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
 from torch.utils.data import TensorDataset
@@ -8,7 +8,8 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from transformers import AdamW, get_linear_schedule_with_warmup
 import numpy as np
 import random
-from result_functions import f1_score_func, accuracy_per_class
+from result_functions import f1_score_func, accuracy_per_class, accuracy, incorrect
+
 
 
 def create_model(df):
@@ -91,7 +92,7 @@ def create_model(df):
         lr=1e-5,
         eps=1e-8)
 
-    epochs = 10
+    epochs = 3
     scheduler = get_linear_schedule_with_warmup(
         optimizer,
         num_warmup_steps=0,
@@ -113,7 +114,7 @@ def create_model(df):
         loss_val_total = 0
         predictions, true_vals = [], []
 
-        for batch in tdqm(data_loader_val):
+        for batch in tqdm(data_loader_val):
             batch = tuple(b.to(device) for b in batch)
 
             inputs = {'input_ids': batch[0],
@@ -198,6 +199,10 @@ def create_model(df):
         _, predictions, true_vals = evaluate(data_loader_val)
 
         per_class = accuracy_per_class(predictions, true_vals, label_dict)
+
+        accuracy_df = accuracy(predictions, true_vals, df)
+
+        incorrect_df = incorrect(predictions, true_vals, label_dict, df)
 
 
 
