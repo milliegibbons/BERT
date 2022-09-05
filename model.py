@@ -1,5 +1,4 @@
 import torch
-import pandas as pd
 from tqdm.notebook import tqdm
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
@@ -8,12 +7,20 @@ from transformers import BertForSequenceClassification
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from transformers import AdamW, get_linear_schedule_with_warmup
 import numpy as np
-from sklearn.metrics import f1_score
 import random
 from result_functions import f1_score_func, accuracy_per_class
 
 
 def create_model(df):
+
+    possible_labels = df.category.unique()
+
+    label_dict = {}
+    for idx, label in enumerate(possible_labels):
+        label_dict[label] = idx
+
+    df['label'] = df.category.replace(label_dict)
+
     x_train, x_val, y_train, y_val = train_test_split(df.index.values,
                                                       df.label.values,
                                                       test_size=0.15,
@@ -100,7 +107,7 @@ def create_model(df):
     model.to(device)
     print(device)
 
-    def evaluate(dataloader_val):
+    def evaluate(data_loader_val):
         model.eval()
 
         loss_val_total = 0
@@ -167,7 +174,7 @@ def create_model(df):
 
             progress_bar.set_postfix({'training_loss': '{:.3f}'.format(loss.item() / len(batch))})
 
-        torch.save(model.state_dict(), f'{epoch}.model')
+        torch.save(model.state_dict(), f'epoch_{epoch}.model')
 
         tqdm.write(f'\nEpoch {epoch}')
 
@@ -186,9 +193,9 @@ def create_model(df):
 
         model.to(device)
 
-        model.load_state_dict(torch.load('data_volume/finetuned_BERT_epoch_1.model', map_location=torch.device('cpu')))
+        model.load_state_dict(torch.load('epoch_1.model', map_location=torch.device('cpu')))
 
-        _, predictions, true_vals = evaluate(dataloader_validation)
+        _, predictions, true_vals = evaluate(data_loader_val)
 
         per_class = accuracy_per_class(predictions, true_vals, label_dict)
 
